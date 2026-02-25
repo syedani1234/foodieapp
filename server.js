@@ -2512,10 +2512,16 @@ app.use((req, res) => {
 });
 
 /* =========================
-   START SERVER
+   START SERVER (with Vercel support)
 ========================= */
-app.listen(PORT, async () => {
-  console.log(`
+
+// Export the app for Vercel (serverless)
+export default app;
+
+// Only start the server if this file is run directly (not imported by Vercel)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║                🚀 FOODIEAPP API SERVER                   ║
 ╠══════════════════════════════════════════════════════════╣
@@ -2548,10 +2554,11 @@ app.listen(PORT, async () => {
 ║  🔧 Debug:          http://localhost:${PORT}/api/debug/db      ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
-  `);
-  
-  const dbConnected = await testDatabaseConnection();
-  if (!dbConnected) {
-    console.error("⚠️  WARNING: Database connection failed!");
-  }
-});
+    `);
+    
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      console.error("⚠️  WARNING: Database connection failed!");
+    }
+  });
+}
