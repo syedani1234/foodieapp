@@ -2518,8 +2518,8 @@ app.use((req, res) => {
 // Export the app for Vercel (serverless)
 export default app;
 
-// Only start the server if this file is run directly (not imported by Vercel)
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Only start the server locally (not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`
 ╔══════════════════════════════════════════════════════════╗
