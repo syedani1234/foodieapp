@@ -77,27 +77,39 @@ app.use("/uploads", express.static(UPLOAD_DIR, {
 }));
 
 /* =========================
-   DATABASE CONNECTION
+   DATABASE CONNECTION (Robust)
 ========================= */
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "root123",
-  database: process.env.DB_NAME || "foodieapp",
-  connectionLimit: 20,
-  waitForConnections: true,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0
-});
+let pool; // Declare pool variable
+
+try {
+  pool = mysql.createPool({
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "root123",
+    database: process.env.DB_NAME || "foodieapp",
+    connectionLimit: 20,
+    waitForConnections: true,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
+  });
+console.log("✅ Database pool created");
+} catch (err) {
+  console.error("❌ Failed to create database pool:", err.message);
+  pool = null; // Set pool to null so endpoints can handle it
+}
 
 // Test database connection
 async function testDatabaseConnection() {
+  if (!pool) {
+    console.error("❌ No database pool available");
+    return false;
+  }
   try {
     const connection = await pool.getConnection();
     console.log("✅ Database connection successful");
     connection.release();
-    return true;
+     return true;
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
     return false;
