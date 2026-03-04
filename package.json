@@ -1,6 +1,7 @@
 {
   "name": "foodieapp-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API for Foodie App",
   "main": "server.js",
   "scripts": {
