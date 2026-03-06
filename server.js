@@ -87,6 +87,7 @@ try {
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "root123",
     database: process.env.DB_NAME || "foodieapp",
+    port: process.env.DB_PORT || 3306,
     connectionLimit: 20,
     waitForConnections: true,
     queueLimit: 0,
