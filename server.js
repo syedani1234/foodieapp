@@ -2525,53 +2525,26 @@ app.use((req, res) => {
 });
 
 /* =========================
-   START SERVER (with Vercel support)
+   START SERVER (Universal: works on both Pxxl and Vercel)
 ========================= */
 
-// Export the app for Vercel (serverless)
+// Export the app for potential serverless environments (like Vercel)
 export default app;
 
-// Only start the server locally (not on Vercel)
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, '0.0.0.0', async () => {
-    console.log(`
-╔══════════════════════════════════════════════════════════╗
-║                🚀 FOODIEAPP API SERVER                   ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  🔗 Base URL: http://localhost:${PORT}                         ║
-║  📊 Health Check: http://localhost:${PORT}/api/health          ║
-║  📋 API Docs: http://localhost:${PORT}/api/docs               ║
-║                                                          ║
-║  📋 MAIN ENDPOINTS:                                      ║
-║                                                          ║
-║  • All cuisines:    http://localhost:${PORT}/api/cuisines      ║
-║  • All restaurants: http://localhost:${PORT}/api/restaurants   ║
-║  • All deals:       http://localhost:${PORT}/deals             ║
-║  • Filtered deals:  http://localhost:${PORT}/api/deals         ║
-║  • Create deal:     http://localhost:${PORT}/api/deals         ║
-║  • Upload image:    http://localhost:${PORT}/api/upload        ║
-║  • Place order:     http://localhost:${PORT}/api/orders        ║
-║  • Get order:       http://localhost:${PORT}/api/orders/:id    ║
-║                                                          ║
-║  🍽️  CUISINE RESTAURANTS:                                ║
-║                                                          ║
-║  • Format: http://localhost:${PORT}/cuisines/{slug}            ║
-║  • Example: http://localhost:${PORT}/cuisines/italian          ║
-║                                                          ║
-║  🍕 DEAL CUSTOMIZATION:                                  ║
-║                                                          ║
-║  • Format: http://localhost:${PORT}/api/deals/{id}/customization║
-║  • Example: http://localhost:${PORT}/api/deals/1/customization ║
-║                                                          ║
-║  🔧 Debug:          http://localhost:${PORT}/api/debug/db      ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-    `);
-    
-    const dbConnected = await testDatabaseConnection();
-    if (!dbConnected) {
-      console.error("⚠️  WARNING: Database connection failed!");
-    }
+// Start the server only if this file is run directly (not imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const port = process.env.PORT || 4000;
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 Server is running on port ${port}`);
+    // Test database connection asynchronously
+    testDatabaseConnection().then(connected => {
+      if (connected) {
+        console.log("✅ Database connected successfully");
+      } else {
+        console.error("⚠️ Database connection failed");
+      }
+    }).catch(err => {
+      console.error("⚠️ Error testing database connection:", err);
+    });
   });
 }
