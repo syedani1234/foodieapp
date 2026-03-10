@@ -6,6 +6,8 @@ import fs from "fs";
 import multer from "multer";
 import { pathToFileURL } from 'url';
 
+console.log("🔥 FoodieApp backend starting...");
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -2525,27 +2527,25 @@ app.use((req, res) => {
 });
 
 /* =========================
-   START SERVER (Universal: works on both Pxxl and Vercel)
+   START SERVER (For Pxxl – always listen)
 ========================= */
 
 // Export the app for potential serverless environments (like Vercel)
 export default app;
 
-// Start the server only if this file is run directly (not imported)
-// Convert process.argv[1] to a file:// URL for accurate comparison
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const port = process.env.PORT || 4000;
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${port}`);
-    // Test database connection asynchronously
-    testDatabaseConnection().then(connected => {
-      if (connected) {
-        console.log("✅ Database connected successfully");
-      } else {
-        console.error("⚠️ Database connection failed");
-      }
-    }).catch(err => {
-      console.error("⚠️ Error testing database connection:", err);
-    });
+// Always start the server when this file is run directly.
+// On Pxxl, this file is always the main entry point.
+const port = process.env.PORT || 4000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on port ${port}`);
+  // Test database connection asynchronously (doesn't block startup)
+  testDatabaseConnection().then(connected => {
+    if (connected) {
+      console.log("✅ Database connected successfully");
+    } else {
+      console.error("⚠️ Database connection failed");
+    }
+  }).catch(err => {
+    console.error("⚠️ Error testing database connection:", err);
   });
-}
+});
