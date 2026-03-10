@@ -4,7 +4,7 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
-import { fileURLToPath } from "url";
+import { pathToFileURL } from 'url';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -2532,7 +2532,8 @@ app.use((req, res) => {
 export default app;
 
 // Start the server only if this file is run directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Convert process.argv[1] to a file:// URL for accurate comparison
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = process.env.PORT || 4000;
   app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${port}`);
