@@ -7,14 +7,13 @@ import multer from "multer";
 import { fileURLToPath, pathToFileURL } from 'url';
 
 // ------------------------------------------------------------
-// Global error handlers to catch any startup crashes and log them
+// Global error handlers – catch any startup crashes and log them
 // ------------------------------------------------------------
 process.on('uncaughtException', (err) => {
   console.error('🔥 UNCAUGHT EXCEPTION:', err);
-  // Keep the process alive (optional, but good for debugging)
-  // process.exit(1); // Uncomment if you want to crash on uncaught errors
+  // Keep process alive for a moment to allow log flush
+  setTimeout(() => process.exit(1), 1000);
 });
-
 process.on('unhandledRejection', (reason, promise) => {
   console.error('🔥 UNHANDLED REJECTION at:', promise, 'reason:', reason);
 });
@@ -333,7 +332,7 @@ async function initializeDatabase() {
     
   } catch (error) {
     console.error("❌ Database initialization error:", error);
-    // Do not throw – allow server to continue (endpoints will handle missing tables)
+    // Do NOT throw – allow server to continue (endpoints will handle missing tables)
   }
 }
 
@@ -484,6 +483,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", async (req, res) => {
+  // If pool is missing, return degraded status
   if (!pool) {
     return res.status(500).json({
       status: "unhealthy",
