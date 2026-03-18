@@ -6,6 +6,19 @@ import fs from "fs";
 import multer from "multer";
 import { fileURLToPath, pathToFileURL } from 'url';
 
+// ------------------------------------------------------------
+// Global error handlers to catch any startup crashes and log them
+// ------------------------------------------------------------
+process.on('uncaughtException', (err) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', err);
+  // Keep the process alive (optional, but good for debugging)
+  // process.exit(1); // Uncomment if you want to crash on uncaught errors
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔥 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 console.log("1. Starting server.js...");
 
 const app = express();
@@ -320,7 +333,7 @@ async function initializeDatabase() {
     
   } catch (error) {
     console.error("❌ Database initialization error:", error);
-    throw error;
+    // Do not throw – allow server to continue (endpoints will handle missing tables)
   }
 }
 
@@ -434,7 +447,10 @@ async function checkAndAddMissingColumns() {
 
 // ❌ The insertSampleData() function has been removed entirely.
 
-initializeDatabase().catch(console.error);
+// Call initializeDatabase but DO NOT await – let it run in background, catch errors
+initializeDatabase().catch(err => {
+  console.error("❌ Unhandled error in initializeDatabase:", err);
+});
 
 console.log("9. initializeDatabase called, defining routes...");
 
@@ -468,6 +484,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      status: "unhealthy",
+      timestamp: new Date().toISOString(),
+      database: "disconnected (pool missing)"
+    });
+  }
   try {
     await pool.query("SELECT 1");
     
