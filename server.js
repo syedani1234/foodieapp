@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 
-console.log("🔥 Step 4: adding database pool");
+console.log("🔥 Step 5: adding full health endpoint");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -53,14 +53,52 @@ async function testDatabaseConnection() {
   }
 }
 
-// Health endpoint (still simple, doesn't use DB)
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+// Full health endpoint
+app.get("/api/health", async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      status: "unhealthy",
+      database: "disconnected (pool missing)"
+    });
+  }
+  try {
+    await pool.query("SELECT 1");
+    
+    // Try to get counts – tables may not exist yet, so we catch errors
+    let cuisineCount = 0, restaurantCount = 0, dealCount = 0;
+    try {
+      const [cuisineResult] = await pool.query("SELECT COUNT(*) as count FROM cuisines WHERE is_active = TRUE");
+      cuisineCount = cuisineResult[0].count;
+    } catch (e) { console.log("Cuisines table not ready yet"); }
+    try {
+      const [restaurantResult] = await pool.query("SELECT COUNT(*) as count FROM restaurants WHERE is_active = TRUE");
+      restaurantCount = restaurantResult[0].count;
+    } catch (e) { console.log("Restaurants table not ready yet"); }
+    try {
+      const [dealResult] = await pool.query("SELECT COUNT(*) as count FROM deals WHERE is_active = TRUE");
+      dealCount = dealResult[0].count;
+    } catch (e) { console.log("Deals table not ready yet"); }
+    
+    res.json({
+      status: "healthy",
+      database: "connected",
+      counts: {
+        cuisines: cuisineCount,
+        restaurants: restaurantCount,
+        deals: dealCount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "unhealthy",
+      database: "disconnected",
+      error: error.message
+    });
+  }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server listening on port ${PORT}`);
-  // Test DB after startup
   testDatabaseConnection().then(connected => {
     if (connected) console.log("✅ DB test passed");
     else console.error("⚠️ DB test failed");
