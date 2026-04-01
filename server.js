@@ -6,7 +6,7 @@ import multer from "multer";
 import { fileURLToPath } from 'url';
 import mysql from "mysql2/promise";
 
-console.log("🔥 Step 6: adding file upload (with logging)");
+console.log("🔥 Final: full backend with upload and DB");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -108,6 +108,27 @@ async function testDatabaseConnection() {
   }
 }
 
+// ---------- Upload route ----------
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({
+      success: true,
+      data: {
+        imageUrl: `http://localhost:${PORT}${imageUrl}`,
+        filePath: imageUrl,
+        filename: req.file.filename
+      }
+    });
+  } catch (err) {
+    console.error("❌ Upload error:", err);
+    res.status(500).json({ error: "Upload failed", message: err.message });
+  }
+});
+
 // ---------- Health endpoint ----------
 app.get("/api/health", async (req, res) => {
   if (!pool) {
@@ -151,9 +172,7 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Optional: a test upload route (you can add later)
-// app.post("/api/upload", upload.single("image"), (req, res) => { ... });
-
+// ---------- Start server ----------
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server listening on port ${PORT}`);
   testDatabaseConnection().then(connected => {
