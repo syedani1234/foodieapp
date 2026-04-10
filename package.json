@@ -1,23 +1,13 @@
 {
-  "name": "foodieapp-backend",
+  "name": "foodieapp",
   "version": "1.0.0",
-  "type": "module",
-  "description": "Backend API for Foodie App",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "node backend/server.js"
   },
-  "keywords": ["restaurant", "api", "backend"],
-  "author": "Your Name",
-  "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "mysql2": "^3.15.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
-  },
-  "engines": { "node": "22.x" }
+    "mysql2": "^3.6.5",
+    "cors": "^2.8.5"
+  }
 }
