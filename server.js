@@ -3,10 +3,9 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
-import { fileURLToPath } from 'url';
 import mysql from "mysql2/promise";
 
-console.log("🔥 Final: full backend with upload and DB");
+console.log("🔥 Step 6: file upload with full imports");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -24,10 +23,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 console.log("✅ Middleware added");
 
 // ---------- File upload setup ----------
-console.log("📁 Setting up file upload...");
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOAD_DIR = path.join(__dirname, "uploads");
+// Use a subdirectory of the current working directory (which is writable)
+const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
 try {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -42,19 +39,16 @@ try {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("📁 Storage destination called");
     cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname).toLowerCase();
-    console.log(`📁 Generating filename: img-${uniqueSuffix}${ext}`);
     cb(null, `img-${uniqueSuffix}${ext}`);
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  console.log(`🔍 Checking file: ${file.originalname}, mimetype: ${file.mimetype}`);
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   if (allowedTypes.test(file.mimetype) && allowedTypes.test(path.extname(file.originalname).toLowerCase())) {
     cb(null, true);
@@ -63,18 +57,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ 
-  storage, 
-  limits: { fileSize: 5 * 1024 * 1024, files: 1 }, 
-  fileFilter 
-});
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024, files: 1 }, fileFilter });
 console.log("✅ Multer configured");
 
 app.use("/uploads", express.static(UPLOAD_DIR));
 console.log("✅ Static route /uploads set up");
 
 // ---------- Database pool ----------
-console.log("🗄️ Creating database pool...");
 let pool;
 try {
   pool = mysql.createPool({
@@ -132,43 +121,30 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 // ---------- Health endpoint ----------
 app.get("/api/health", async (req, res) => {
   if (!pool) {
-    return res.status(500).json({
-      status: "unhealthy",
-      database: "disconnected (pool missing)"
-    });
+    return res.status(500).json({ status: "unhealthy", database: "pool missing" });
   }
   try {
     await pool.query("SELECT 1");
-    
     let cuisineCount = 0, restaurantCount = 0, dealCount = 0;
     try {
       const [cuisineResult] = await pool.query("SELECT COUNT(*) as count FROM cuisines WHERE is_active = TRUE");
       cuisineCount = cuisineResult[0].count;
-    } catch (e) { console.log("Cuisines table not ready yet"); }
+    } catch (e) { /* table may not exist yet */ }
     try {
       const [restaurantResult] = await pool.query("SELECT COUNT(*) as count FROM restaurants WHERE is_active = TRUE");
       restaurantCount = restaurantResult[0].count;
-    } catch (e) { console.log("Restaurants table not ready yet"); }
+    } catch (e) { }
     try {
       const [dealResult] = await pool.query("SELECT COUNT(*) as count FROM deals WHERE is_active = TRUE");
       dealCount = dealResult[0].count;
-    } catch (e) { console.log("Deals table not ready yet"); }
-    
+    } catch (e) { }
     res.json({
       status: "healthy",
       database: "connected",
-      counts: {
-        cuisines: cuisineCount,
-        restaurants: restaurantCount,
-        deals: dealCount
-      }
+      counts: { cuisines: cuisineCount, restaurants: restaurantCount, deals: dealCount }
     });
   } catch (error) {
-    res.status(500).json({
-      status: "unhealthy",
-      database: "disconnected",
-      error: error.message
-    });
+    res.status(500).json({ status: "unhealthy", database: "disconnected", error: error.message });
   }
 });
 
