@@ -2,8 +2,8 @@
   "name": "foodieapp",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
-    "start": "node backend/server.js"
+    "build": "cd frontend && npm install && npm run build && cd .. && rm -rf public && cp -R frontend/build public",
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
